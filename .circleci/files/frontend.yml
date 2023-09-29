@@ -10,7 +10,7 @@ Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "BucketS3-Vyttt-promax-${ID}"
+      BucketName: !Sub "bucket-s3-vyttt-promax-${ID}"
       # AccessControl: PublicRead
       PublicAccessBlockConfiguration:
         BlockPublicAcls: false
