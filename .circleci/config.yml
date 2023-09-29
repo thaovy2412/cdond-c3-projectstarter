@@ -22,8 +22,8 @@ commands:
           command: |
             # Your code here
             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
-            aws cloudformation delete-stack --stack-name backend-stack-<< parameters.Workflow_ID >>
-            aws cloudformation delete-stack --stack-name frontend-stack-<< parameters.Workflow_ID >>
+            aws cloudformation delete-stack --stack-name ec2-vy-promax-15-stack-<< parameters.Workflow_ID >>
+            aws cloudformation delete-stack --stack-name frontend-vy-promax-15-stack-<< parameters.Workflow_ID >>
 
   # revert-migrations:
   #   description: Revert the last migration if successfully run in the current workflow.
@@ -121,9 +121,6 @@ jobs:
       # Docker image here
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -141,53 +138,35 @@ jobs:
       # Docker image here
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
       - checkout
       - restore_cache:
           keys: [backend-build]
       - run:
           command: |
-            # Your code here
             cd ./backend
             npm install
             npm run test
-            # exit 1        
   scan-frontend:
     docker:
       # Docker image here
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
       - checkout
       - restore_cache:
           keys: [frontend-build]
       - run:
           name: scan FE
           command: |
-            # Your code here
             cd frontend
-
             npm install
-
             npm audit fix --force --audit-level=critical
-
             npm audit fix
-
-            # npm audit --audit-level=critical
-            # exit 1
 
   scan-backend:
     docker:
       # Docker image here
       - image: circleci/node:13.8.0
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
       - checkout
       - restore_cache:
           keys: [backend-build]
@@ -195,15 +174,9 @@ jobs:
           command: |
             # Your code here
             cd ./backend
-
             npm install
-
             npm audit fix --force --audit-level=critical
-
             npm audit fix
-
-            # npm audit --audit-level=critical
-            # exit 1
 
   notify:
     docker:
@@ -227,58 +200,76 @@ jobs:
             }
           event: always
 
-#   deploy-infrastructure:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Ensure back-end infrastructure exists
-#           command: |
-#             aws cloudformation deploy \
-#               --template-file .circleci/files/backend.yml \
-#               #--tags project=your-tag \
-#               # --stack-name "your back-end stack name with workflow id" \
-#               # --parameter-overrides ID="your workflow id"  
-#               exit 1
-#       - run:
-#           name: Ensure front-end infrastructure exist
-#           command: |
-#             aws cloudformation deploy \
-#               --template-file .circleci/files/frontend.yml \
-#               #--tags project=your-tag \
-#               # --stack-name "your front-end stack name with workflow id" \
-#               # --parameter-overrides ID="your workflow id"  
-#               exit 1
-#       - run:
-#           name: Add back-end ip to ansible inventory
-#           command: |
-#             # Your code here
-#             exit 1
-#       - persist_to_workspace:
-#           root: ~/
-#           paths:
-#             - project/.circleci/ansible/inventory.txt
-#       # Here's where you will add some code to rollback on failure      
+  deploy-infrastructure:
+    docker:
+      # Docker image here that supports AWS CLI
+      - image: cimg/base:stable
+    steps:
+      # Checkout code from git
+      - run:
+          name: Ensure back-end infrastructure exists
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=ec2-vy-promax-15 \
+              --stack-name ec2-vy-promax-15-stack-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}  
+              exit 1
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=frontend-vy-promax-15-stack-${CIRCLE_WORKFLOW_ID:0:7} \
+              --stack-name frontend-vy-promax-15-stack-${CIRCLE_WORKFLOW_ID:0:7} \
+              --parameter-overrides ID="your workflow id"  
+              exit 1
+      - run:
+          name: Add back-end ip to ansible inventory
+          command: |
+            BACKEND_PUBLIC_IP=$(aws ec2 describe-instances \
+              --filters "Name=tag:Name,Values=ec2-vy-promax-15-stack-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text)
+            echo $BACKEND_PUBLIC_IP >> .circleci/ansible/inventory.txt
+            cat .circleci/ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      # Here's where you will add some code to rollback on failure      
+      - destroy-environment
 
-#   configure-infrastructure:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure      
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: cimg/base:stable
+    steps:
+      # Checkout code from git
+      - checkout
+      # install dependence
+      # cli
+      - install_awscli
+        # ansible
+      - install_ansible
+
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["ef:4e:c4:3f:41:60:68:e0:a3:50:66:b6:dd:96:09:74"]
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Configure server
+          command: |
+            pwd
+            ls -la . ..
+            cd .circleci/ansible
+            ls -la
+            cat inventory.txt
+            ansible-playbook -i inventory.txt configure-server.yml
+      # Here's where you will add some code to rollback on failure
+      - destroy-environment   
 
 #   run-migrations:
 #     docker:
