@@ -287,7 +287,6 @@ jobs:
       # Checkout code from git
       - checkout
       - install_awscli
-      - revert-migrations-force
       - run:
           name: Run migrations
           command: |
