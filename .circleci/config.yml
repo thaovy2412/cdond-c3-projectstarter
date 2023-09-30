@@ -322,6 +322,7 @@ jobs:
             if grep -q "No migrations are pending" ~/project/backend/migrations_dump.txt
               then
                 # If you are using kvdb.io, generate the bucket ID "9GE4jRtKznmVKRfvdBABBe" in your local terminal first
+                echo ${CIRCLE_WORKFLOW_ID:0:7}
                 curl https://kvdb.io/TLkmanUQtXydmu5464na92/migration_${CIRCLE_WORKFLOW_ID:0:7} \
                 -d ${CIRCLE_WORKFLOW_ID:0:7}
                 curl https://kvdb.io/TLkmanUQtXydmu5464na92/migration_${CIRCLE_WORKFLOW_ID:0:7}
@@ -415,8 +416,8 @@ jobs:
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      - destroy-environment
-      - revert-migrations
+      # - destroy-environment
+      # - revert-migrations
 
 
 
