@@ -505,6 +505,29 @@ jobs:
               aws cloudformation delete-stack --stack-name "frontend-vy-promax-15-stack-${OldWorkflowID}"
             fi
             
+  add-prometheus-node-exporter:
+    docker:
+      - image: python:3.7-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["ef:4e:c4:3f:41:60:68:e0:a3:50:66:b6:dd:96:09:74"]
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update aws-cli tar gzip ansible nodejs npm
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Setup Prometheus Node Exporter
+          command: |
+            cd .circleci/ansible
+            cat inventory.txt
+            ls
+            ansible-playbook -i inventory.txt configure-prometheus-node-exporter.yml
+
+      - destroy-environment
+      - revert-migrations            
 
 workflows:
   default:
@@ -528,6 +551,8 @@ workflows:
           filters:
             branches:
               only: [circleci-project-setup]
+      - add-prometheus-node-exporter:
+          requires: [deploy-infrastructure]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
       - run-migrations:
