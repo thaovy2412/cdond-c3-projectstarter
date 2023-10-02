@@ -3,3 +3,6 @@ link github: https://github.com/thaovy2412/cdond-c3-projectstarter/tree/circleci
 
 CloudFront: d1mw9bc4e69xcz.cloudfront.net	
 Cloufront: https://d1mw9bc4e69xcz.cloudfront.net/#/employees
+
+S3Bucket url FE: http://bucket-s3-vyttt-promax-0fa0988.s3-website-us-east-1.amazonaws.com/#/employees
+http://bucket-s3-vyttt-promax-0fa0988.s3-website-us-east-1.amazonaws.com
