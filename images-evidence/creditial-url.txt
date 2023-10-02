@@ -1,0 +1,5 @@
+link github: https://github.com/thaovy2412/cdond-c3-projectstarter/tree/circleci-project-setup
+
+
+CloudFront: d1mw9bc4e69xcz.cloudfront.net	
+Cloufront: https://d1mw9bc4e69xcz.cloudfront.net/#/employees
